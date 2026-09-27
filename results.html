@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AirPulse — Survey Results</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #10141B;
+    --panel: #171D27;
+    --panel-line: #262E3B;
+    --text-primary: #ECEFF3;
+    --text-muted: #8C97A8;
+    --teal: #4FD1C5;
+    --teal-dim: #2E7C76;
+    --radius-lg: 20px;
+    --radius-sm: 10px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  :root:not([data-theme="light"]) {
+    --bg: #10141B; --panel: #171D27; --panel-line: #262E3B;
+    --text-primary: #ECEFF3; --text-muted: #8C97A8;
+  }
+  :root[data-theme="light"] {
+    --bg: #F3F4F1; --panel: #FFFFFF; --panel-line: #DDE1E6;
+    --text-primary: #171B22; --text-muted: #5B6472;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #F3F4F1; --panel: #FFFFFF; --panel-line: #DDE1E6;
+      --text-primary: #171B22; --text-muted: #5B6472;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: calc(64px + env(safe-area-inset-top, 0px)); }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text-primary);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    overflow-x: hidden;
+  }
+  a { color: inherit; }
+
+  .haze {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(700px 500px at 50% -10%, rgba(79,209,197,0.10), transparent 60%),
+      radial-gradient(500px 350px at 100% 20%, rgba(240,194,75,0.05), transparent 60%);
+  }
+
+  header {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px clamp(20px, 5vw, 64px);
+    background: color-mix(in srgb, var(--bg) 85%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--panel-line);
+  }
+  .brand {
+    display: flex; align-items: baseline; gap: 10px;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 19px;
+    letter-spacing: -0.01em;
+  }
+  .brand span.dot {
+    width: 9px; height: 9px; border-radius: 50%; background: var(--teal);
+    box-shadow: 0 0 0 4px rgba(79,209,197,0.15); display: inline-block;
+  }
+  nav { display: flex; align-items: center; gap: 0; overflow-x: auto; max-width: 70vw; scrollbar-width: none; }
+  nav::-webkit-scrollbar { display: none; }
+  nav a {
+    text-decoration: none; color: var(--text-muted); font-size: 13.5px;
+    margin-left: 20px; white-space: nowrap; transition: color 0.15s ease;
+  }
+  nav a:first-child { margin-left: 0; }
+  nav a:hover, nav a:focus-visible { color: var(--text-primary); }
+
+  main {
+    position: relative; z-index: 2;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: clamp(40px, 6vw, 64px) clamp(20px, 5vw, 40px) 0;
+  }
+
+  .page-head { text-align: center; margin-bottom: clamp(32px, 5vw, 48px); }
+  .page-head h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: clamp(28px, 4.5vw, 42px);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin: 0 0 12px;
+  }
+  .page-head p {
+    color: var(--text-muted);
+    font-size: 15.5px;
+    line-height: 1.6;
+    max-width: 56ch;
+    margin: 0 auto;
+  }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: clamp(40px, 6vw, 64px);
+  }
+  @media (max-width: 720px) { .stat-row { grid-template-columns: repeat(2, 1fr); } }
+  .stat-card {
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+    border-radius: var(--radius-sm);
+    padding: 18px 16px;
+    text-align: center;
+  }
+  .stat-card .num { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 22px; color: var(--teal); }
+  .stat-card .label { font-size: 12.5px; color: var(--text-muted); margin-top: 4px; line-height: 1.35; }
+
+  .section { margin-bottom: clamp(48px, 7vw, 72px); scroll-margin-top: 80px; }
+  .section-head {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--panel-line);
+  }
+  .section-head .n {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600; font-size: 13px; color: var(--teal);
+    border: 1px solid var(--teal-dim);
+    border-radius: 999px;
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .section-head h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 19px; font-weight: 600; margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 18px;
+  }
+  .chart-grid.wide { grid-template-columns: 1fr; }
+
+  .chart-panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+    border-radius: var(--radius-lg);
+    padding: clamp(20px, 3vw, 26px);
+  }
+  .chart-panel h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px; font-weight: 600; margin: 0 0 2px;
+    line-height: 1.35;
+  }
+  .chart-panel .sub { font-size: 12px; color: var(--text-muted); margin: 0 0 16px; }
+  .chart-wrap { position: relative; height: 240px; }
+  .chart-wrap.tall { height: 320px; }
+  .chart-wrap.xtall { height: 420px; }
+
+  .cta-row { display: flex; justify-content: center; margin: clamp(40px, 6vw, 60px) 0 8px; }
+  .btn-primary {
+    appearance: none; border: none; cursor: pointer;
+    background: var(--teal); color: #08201D;
+    font-family: 'Inter', sans-serif; font-weight: 600; font-size: 15.5px;
+    padding: 15px 28px; border-radius: var(--radius-sm);
+    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 10px;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .btn-primary:hover, .btn-primary:focus-visible { background: #63E0D4; transform: translateY(-1px); }
+
+  .data-note {
+    font-size: 13px; color: var(--text-muted); text-align: center;
+    max-width: 62ch; margin: 0 auto;
+  }
+
+  footer {
+    position: relative; z-index: 2;
+    max-width: 1080px; margin: 0 auto;
+    padding: 26px clamp(20px, 5vw, 40px) calc(30px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--panel-line);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    font-size: 13px; color: var(--text-muted);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .btn-primary { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="haze"></div>
+
+<header>
+  <div class="brand"><span class="dot"></span>AirPulse</div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="#exposure">Exposure</a>
+    <a href="#sources">Sources</a>
+    <a href="#health">Health</a>
+    <a href="#habits">Habits</a>
+    <a href="#vehicle">Vehicle</a>
+  </nav>
+</header>
+
+<main>
+  <div class="page-head">
+    <h1>What Pune is telling us.</h1>
+    <p>Full results from the "Human Exposure to Pollution" survey — 73 responses covering commute habits, pollution sources, symptoms, and what people are doing about it.</p>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-card"><div class="num">73</div><div class="label">Total responses</div></div>
+    <div class="stat-card"><div class="num">49%</div><div class="label">Spend 6+ hrs outdoors daily</div></div>
+    <div class="stat-card"><div class="num">41%</div><div class="label">Face heavy traffic daily</div></div>
+    <div class="stat-card"><div class="num">52%</div><div class="label">Symptoms worsen during high pollution</div></div>
+  </div>
+
+  <section class="section" id="exposure">
+    <div class="section-head"><span class="n">1</span><h2>Exposure &amp; Commute</h2></div>
+    <div class="chart-grid">
+      <div class="chart-panel">
+        <h3>How much time do you spend outdoors on a regular day?</h3>
+        <p class="sub">73 responses</p>
+        <div class="chart-wrap"><canvas id="c_q1"></canvas></div>
+      </div>
+      <div class="chart-panel">
+        <h3>What is your primary mode of transportation?</h3>
+        <p class="sub">73 responses</p>
+        <div class="chart-wrap"><canvas id="c_q2"></canvas></div>
+      </div>
+      <div class="chart-panel">
+        <h3>How frequently are you exposed to heavy traffic?</h3>
+        <p class="sub">73 responses</p>
+        <div class="chart-wrap"><canvas id="c_q3"></canvas></div>
+      </div>
+      <div class="chart-panel">
+        <h3>Is your home/workplace close to a major road?</h3>
+        <p class="sub">73 responses</p>
+        <div class="chart-wrap"><canvas id="c_q4"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="sources">
+    <div class="section-head"><span class="n">2</span><h2>Pollution Sources</h2></div>
+    <div class="chart-grid wide">
+      <div class="chart-panel">
+        <h3>Are you regularly exposed to any of the following?</h3>
+        <p class="sub">Multiple choice — 73 respondents</p>
+        <div class="chart-wrap xtall"><canvas id="c_q5"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="health">
+    <div class="section-head"><span class="n">3</span><h2>Symptoms &amp; Health Impact</h2></div>
+    <div class="chart-grid wide">
+      <div class="chart-panel">
+        <h3>Symptoms experienced during high-pollution periods</h3>
+        <p class="sub">Multiple choice — 73 respondents</p>
+        <div class="chart-wrap tall"><canvas id="c_q6"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-grid" style="margin-top:18px;">
+      <div class="chart-panel">
+        <h3>How often do symptoms occur during noticeable pollution?</h3>
+        <p class="sub">73 responses</p>
+        <div class="chart-wrap"><canvas id="c_q7"></canvas></div>
+      </div>
+      <div class="chart-panel">
+        <h3>Do symptoms worsen during poor air quality / traffic / haze?</h3>
+        <p class="sub">73 responses</p>
+        <div class="chart-wrap"><canvas id="c_q8"></canvas></div>
+      </div>
+      <div class="chart-panel">
+        <h3>Diagnosed with a respiratory or cardiovascular condition?</h3>
+        <p class="sub">73 responses</p>
+        <div class="chart-wrap"><canvas id="c_q10"></canvas></div>
+      </div>
+      <div class="chart-panel">
+        <h3>Diagnosis category (if yes)</h3>
+        <p class="sub">Optional — 27 responses</p>
+        <div class="chart-wrap"><canvas id="c_q11"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="habits">
+    <div class="section-head"><span class="n">4</span><h2>Mitigation Habits</h2></div>
+    <div class="chart-grid wide">
+      <div class="chart-panel">
+        <h3>Measures taken to reduce personal exposure to pollution</h3>
+        <p class="sub">Multiple choice — 73 respondents</p>
+        <div class="chart-wrap xtall"><canvas id="c_q12"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-grid wide" style="margin-top:18px;">
+      <div class="chart-panel">
+        <h3>Measures taken to reduce the pollution they generate</h3>
+        <p class="sub">Multiple choice — 73 respondents</p>
+        <div class="chart-wrap xtall"><canvas id="c_q13"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="vehicle">
+    <div class="section-head"><span class="n">5</span><h2>Vehicle Habits &amp; Barriers</h2></div>
+    <div class="chart-grid">
+      <div class="chart-panel">
+        <h3>How regularly is your vehicle serviced?</h3>
+        <p class="sub">73 responses</p>
+        <div class="chart-wrap"><canvas id="c_q14"></canvas></div>
+      </div>
+      <div class="chart-panel">
+        <h3>Do you often keep the engine idling?</h3>
+        <p class="sub">73 responses</p>
+        <div class="chart-wrap"><canvas id="c_q15"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-grid wide" style="margin-top:18px;">
+      <div class="chart-panel">
+        <h3>Main difficulty preventing more pollution-reduction measures</h3>
+        <p class="sub">73 responses</p>
+        <div class="chart-wrap tall"><canvas id="c_q16"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <p class="data-note">A couple of nonsensical free-text entries (not real answers) were excluded from the symptoms and diagnosis-category charts. Everything else reflects the raw response counts from the uploaded spreadsheet.</p>
+
+  <div class="cta-row">
+    <a class="btn-primary" id="surveyBtn" href="#" target="_blank" rel="noopener">
+      Take the Survey
+      <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </div>
+</main>
+
+<footer>
+  <span>AirPulse — a community air-quality project</span>
+  <span>Based on 73 submitted responses</span>
+</footer>
+
+<script>
+const surveyData = {
+  "q1_outdoors": [
+    [
+      "More than 6 hours",
+      36
+    ],
+    [
+      "2-4 hours",
+      15
+    ],
+    [
+      "4-6 hours",
+      8
+    ],
+    [
+      "Less than 1 hour",
+      7
+    ],
+    [
+      "1-2 hours",
+      7
+    ]
+  ],
+  "q2_transport": [
+    [
+      "Two-wheeler",
+      31
+    ],
+    [
+      "Public Transport (buses, metro, etc.)",
+      20
+    ],
+    [
+      "Four-wheeler",
+      11
+    ],
+    [
+      "Walking",
+      8
+    ],
+    [
+      "Auto-rickshaw/Taxi",
+      2
+    ],
+    [
+      "Bicycle",
+      1
+    ]
+  ],
+  "q3_traffic": [
+    [
+      "Daily",
+      30
+    ],
+    [
+      "Sometimes",
+      18
+    ],
+    [
+      "Occasionally",
+      13
+    ],
+    [
+      "Often",
+      10
+    ],
+    [
+      "Never",
+      2
+    ]
+  ],
+  "q4_proximity": [
+    [
+      "Yes, within approximately 100m",
+      38
+    ],
+    [
+      "yes, approximately 100-500m away",
+      17
+    ],
+    [
+      "More than 500m",
+      15
+    ],
+    [
+      "Not sure",
+      3
+    ]
+  ],
+  "q5_exposure": [
+    [
+      "Road dust",
+      63
+    ],
+    [
+      "Vehicle smoke",
+      62
+    ],
+    [
+      "Construction dust",
+      50
+    ],
+    [
+      "Cigarette/tobacco smoke",
+      29
+    ],
+    [
+      "Garbage burning",
+      20
+    ],
+    [
+      "Industrial smoke",
+      19
+    ],
+    [
+      "Cooking smoke",
+      17
+    ],
+    [
+      "Generator exhaust",
+      11
+    ],
+    [
+      "Agriculture smoke (e.g.: biogas)",
+      3
+    ],
+    [
+      "None of these",
+      2
+    ]
+  ],
+  "q6_symptoms": [
+    [
+      "Eye irritation",
+      38
+    ],
+    [
+      "Cough",
+      31
+    ],
+    [
+      "Throat irritation",
+      28
+    ],
+    [
+      "Sneezing",
+      26
+    ],
+    [
+      "Headache",
+      25
+    ],
+    [
+      "Shortness of breath",
+      22
+    ],
+    [
+      "Increased fatigue",
+      21
+    ],
+    [
+      "Runny or blocked nose",
+      17
+    ],
+    [
+      "Chest discomfort",
+      15
+    ],
+    [
+      "No noticeable symptoms",
+      9
+    ],
+    [
+      "Wheezing",
+      7
+    ]
+  ],
+  "q7_frequency": [
+    [
+      "Sometimes",
+      32
+    ],
+    [
+      "Often",
+      17
+    ],
+    [
+      "Rarely",
+      11
+    ],
+    [
+      "Always",
+      9
+    ],
+    [
+      "Never",
+      4
+    ]
+  ],
+  "q8_worse": [
+    [
+      "Yes",
+      31
+    ],
+    [
+      "Sometimes",
+      26
+    ],
+    [
+      "No",
+      9
+    ],
+    [
+      "Not sure",
+      7
+    ]
+  ],
+  "q10_diagnosed": [
+    [
+      "No",
+      55
+    ],
+    [
+      "Yes",
+      12
+    ],
+    [
+      "Maybe",
+      6
+    ]
+  ],
+  "q11_category": [
+    [
+      "Prefer not to say",
+      12
+    ],
+    [
+      "Asthma",
+      5
+    ],
+    [
+      "Chronic Obstructive Pulmonary disease (COPD)",
+      3
+    ],
+    [
+      "Allergic respiratory condition",
+      3
+    ],
+    [
+      "Cardiovascular condition",
+      2
+    ],
+    [
+      "Chronic respiratory condition",
+      1
+    ],
+    [
+      "Blockage in heart",
+      1
+    ]
+  ],
+  "q12_reduce_exposure": [
+    [
+      "Wear a mask during high-pollution periods",
+      39
+    ],
+    [
+      "Avoid heavily congested routes",
+      31
+    ],
+    [
+      "Keep windows closed during severe outdoor pollution",
+      27
+    ],
+    [
+      "Reduce outdoor activity during severe pollution",
+      16
+    ],
+    [
+      "Avoid areas with open burning",
+      15
+    ],
+    [
+      "Maintain indoor ventilation when outdoor air quality is good",
+      11
+    ],
+    [
+      "Check AQI before outdoor activities",
+      9
+    ],
+    [
+      "Use an air purifier",
+      8
+    ],
+    [
+      "None",
+      1
+    ],
+    [
+      "Stay home",
+      1
+    ],
+    [
+      "Not going out on weekend",
+      1
+    ]
+  ],
+  "q13_reduce_generated": [
+    [
+      "Maintain vehicle regularly",
+      34
+    ],
+    [
+      "Walk/cycle for short distances",
+      33
+    ],
+    [
+      "Avoid burning waste",
+      32
+    ],
+    [
+      "Plant/maintain vegetation",
+      28
+    ],
+    [
+      "Use public transport",
+      27
+    ],
+    [
+      "Avoid unnecessary vehicle idling",
+      25
+    ],
+    [
+      "Reduce household waste",
+      23
+    ],
+    [
+      "Segregate waste",
+      23
+    ],
+    [
+      "Use energy-efficient appliances",
+      16
+    ],
+    [
+      "Use cleaner energy/fuels",
+      14
+    ],
+    [
+      "Carpool",
+      9
+    ],
+    [
+      "None",
+      1
+    ],
+    [
+      "Stay home",
+      1
+    ]
+  ],
+  "q14_service": [
+    [
+      "As recommended by the manufacturer",
+      39
+    ],
+    [
+      "Once a year",
+      10
+    ],
+    [
+      "Less than once a year",
+      8
+    ],
+    [
+      "Do not own a vehicle",
+      8
+    ],
+    [
+      "Only when a problem occurs",
+      8
+    ]
+  ],
+  "q15_idling": [
+    [
+      "Never",
+      19
+    ],
+    [
+      "Sometimes",
+      18
+    ],
+    [
+      "Rarely",
+      15
+    ],
+    [
+      "Do not own a vehicle",
+      8
+    ],
+    [
+      "Often",
+      7
+    ],
+    [
+      "Always",
+      6
+    ]
+  ],
+  "q16_barrier": [
+    [
+      "Lack of alternatives",
+      13
+    ],
+    [
+      "Distance/time constraints",
+      13
+    ],
+    [
+      "Lack of public transport",
+      13
+    ],
+    [
+      "Lack of awareness",
+      10
+    ],
+    [
+      "Convenience",
+      8
+    ],
+    [
+      "Safety concerns",
+      6
+    ],
+    [
+      "No major difficulty",
+      6
+    ],
+    [
+      "Affordability",
+      2
+    ],
+    [
+      "Habit",
+      2
+    ]
+  ]
+};
+</script>
+<script>
+  const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/1ZGXldcIQDR3OEaV3uUAYgscK2P4lvSC87jR1LEu3vRs/viewform";
+  document.getElementById('surveyBtn').href = GOOGLE_FORM_URL;
+
+  const palette = ['#3366CC', '#DC3912', '#FF9900', '#109618', '#990099', '#0099C6', '#DD4477', '#66AA00', '#B82E2E', '#316395', '#994499', '#22AA99'];
+  const chartTextColor = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() || "#8C97A8";
+  const panelColor = getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || "#171D27";
+  const gridColor = "rgba(140, 151, 168, 0.12)";
+
+  function guard(canvasId) {
+    if (typeof Chart === 'undefined') {
+      const canvas = document.getElementById(canvasId);
+      if (canvas) canvas.parentElement.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Chart library failed to load — refresh the page.</p>';
+      return false;
+    }
+    return true;
+  }
+
+  function makePie(canvasId, entries) {
+    if (!guard(canvasId)) return;
+    const labels = entries.map(e => e[0]);
+    const values = entries.map(e => e[1]);
+    new Chart(document.getElementById(canvasId), {
+      type: 'pie',
+      data: { labels, datasets: [{ data: values, backgroundColor: palette.slice(0, labels.length), borderColor: panelColor, borderWidth: 2 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { color: chartTextColor, boxWidth: 12, padding: 10, font: { size: 11 } } } }
+      }
+    });
+  }
+
+  function makeBar(canvasId, entries) {
+    if (!guard(canvasId)) return;
+    const labels = entries.map(e => e[0]);
+    const values = entries.map(e => e[1]);
+    new Chart(document.getElementById(canvasId), {
+      type: 'bar',
+      data: { labels, datasets: [{ data: values, backgroundColor: '#4FD1C5', borderRadius: 4, maxBarThickness: 22 }] },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: chartTextColor, font: { size: 11 } }, grid: { color: gridColor }, beginAtZero: true },
+          y: { ticks: { color: chartTextColor, font: { size: 11 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  function renderAll(d) {
+    makePie('c_q1', d.q1_outdoors);
+    makePie('c_q2', d.q2_transport);
+    makePie('c_q3', d.q3_traffic);
+    makePie('c_q4', d.q4_proximity);
+    makeBar('c_q5', d.q5_exposure);
+    makeBar('c_q6', d.q6_symptoms);
+    makePie('c_q7', d.q7_frequency);
+    makePie('c_q8', d.q8_worse);
+    makePie('c_q10', d.q10_diagnosed);
+    makeBar('c_q11', d.q11_category);
+    makeBar('c_q12', d.q12_reduce_exposure);
+    makeBar('c_q13', d.q13_reduce_generated);
+    makePie('c_q14', d.q14_service);
+    makePie('c_q15', d.q15_idling);
+    makeBar('c_q16', d.q16_barrier);
+  }
+
+  // ---- LIVE DATA (only works once self-hosted) ----
+  // This page is published as a static artifact, which can't fetch external
+  // sheets directly (browser network restrictions) — so it always falls back
+  // to the baked-in surveyData above from your uploaded spreadsheet.
+  // Once you self-host (Netlify/Vercel/GitHub Pages), replace CSV_URL below
+  // with your Google Sheet's "Publish to web" CSV link (File > Share >
+  // Publish to web > CSV), and this will tally fresh responses automatically
+  // every time the page loads.
+  const CSV_URL = ""; // e.g. "https://docs.google.com/spreadsheets/d/e/YOUR_ID/pub?output=csv"
+
+  function tallyMulti(values) {
+    const counts = {};
+    values.forEach(v => {
+      if (!v) return;
+      v.split(',').map(s => s.trim()).forEach(part => {
+        if (part) counts[part] = (counts[part] || 0) + 1;
+      });
+    });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  }
+
+  function tallySingle(values) {
+    const counts = {};
+    values.forEach(v => {
+      if (!v) return;
+      const t = v.trim();
+      if (t) counts[t] = (counts[t] || 0) + 1;
+    });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  }
+
+  function parseCSV(text) {
+    // Minimal CSV parser good enough for Google Sheets' published export.
+    const rows = [];
+    let row = [], field = '', inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (inQuotes) {
+        if (c === '"' && text[i + 1] === '"') { field += '"'; i++; }
+        else if (c === '"') { inQuotes = false; }
+        else { field += c; }
+      } else {
+        if (c === '"') inQuotes = true;
+        else if (c === ',') { row.push(field); field = ''; }
+        else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+        else if (c === '\r') { /* skip */ }
+        else { field += c; }
+      }
+    }
+    if (field.length || row.length) { row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  async function loadLiveData() {
+    if (!CSV_URL) { renderAll(surveyData); return; }
+    try {
+      const res = await fetch(CSV_URL);
+      const text = await res.text();
+      const rows = parseCSV(text).filter(r => r.length > 1);
+      const header = rows[0];
+      const body = rows.slice(1);
+      const colIndex = (matchStr) => header.findIndex(h => h.includes(matchStr));
+
+      const col = (idx) => body.map(r => r[idx] || '');
+
+      const live = {
+        q1_outdoors: tallySingle(col(colIndex('spend outdoors'))),
+        q2_transport: tallySingle(col(colIndex('primary mode'))),
+        q3_traffic: tallySingle(col(colIndex('heavy traffic'))),
+        q4_proximity: tallySingle(col(colIndex('major road'))),
+        q5_exposure: tallyMulti(col(colIndex('regularly exposed'))),
+        q6_symptoms: tallyMulti(col(colIndex('experienced any of the following'))),
+        q7_frequency: tallySingle(col(colIndex('how frequently do you experience'))),
+        q8_worse: tallySingle(col(colIndex('appear to become worse'))),
+        q10_diagnosed: tallySingle(col(colIndex('diagnosed with a respiratory'))),
+        q11_category: tallySingle(col(colIndex('which category'))),
+        q12_reduce_exposure: tallyMulti(col(colIndex('reduce your exposure'))),
+        q13_reduce_generated: tallyMulti(col(colIndex('pollution you generate'))),
+        q14_service: tallySingle(col(colIndex('regularly is it serviced'))),
+        q15_idling: tallySingle(col(colIndex('engine idling'))),
+        q16_barrier: tallySingle(col(colIndex('main difficulty')))
+      };
+      renderAll(live);
+    } catch (e) {
+      console.error('Live data fetch failed, using bundled data', e);
+      renderAll(surveyData);
+    }
+  }
+
+  loadLiveData();
+</script>
+
+</body>
+</html>

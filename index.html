@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AirPulse — Pune Air Quality</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #10141B;
+    --panel: #171D27;
+    --panel-line: #262E3B;
+    --text-primary: #ECEFF3;
+    --text-muted: #8C97A8;
+    --teal: #4FD1C5;
+    --teal-dim: #2E7C76;
+    --band-good: #3ED07E;
+    --band-moderate: #F0C24B;
+    --band-usg: #F2994A;
+    --band-unhealthy: #EB5757;
+    --band-vunhealthy: #A25CE0;
+    --band-hazard: #8C2F2F;
+    --radius-lg: 22px;
+    --radius-sm: 10px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  :root:not([data-theme="light"]) {
+    --bg: #10141B; --panel: #171D27; --panel-line: #262E3B;
+    --text-primary: #ECEFF3; --text-muted: #8C97A8;
+  }
+  :root[data-theme="light"] {
+    --bg: #F3F4F1; --panel: #FFFFFF; --panel-line: #DDE1E6;
+    --text-primary: #171B22; --text-muted: #5B6472;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #F3F4F1; --panel: #FFFFFF; --panel-line: #DDE1E6;
+      --text-primary: #171B22; --text-muted: #5B6472;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: env(safe-area-inset-top, 0px); }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text-primary);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    overflow-x: hidden;
+  }
+  a { color: inherit; }
+
+  .haze {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(700px 500px at 50% -10%, rgba(79,209,197,0.10), transparent 60%),
+      radial-gradient(500px 350px at 100% 20%, rgba(240,194,75,0.05), transparent 60%);
+  }
+
+  header {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px clamp(20px, 5vw, 64px);
+    background: color-mix(in srgb, var(--bg) 85%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--panel-line);
+  }
+
+  .brand {
+    display: flex; align-items: baseline; gap: 10px;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 19px;
+    letter-spacing: -0.01em;
+  }
+  .brand span.dot {
+    width: 9px; height: 9px; border-radius: 50%; background: var(--teal);
+    box-shadow: 0 0 0 4px rgba(79,209,197,0.15); display: inline-block;
+  }
+
+  nav a {
+    text-decoration: none; color: var(--text-muted); font-size: 14px;
+    margin-left: 26px; transition: color 0.15s ease;
+  }
+  nav a:hover, nav a:focus-visible { color: var(--text-primary); }
+
+  main {
+    position: relative; z-index: 2;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: clamp(56px, 9vw, 100px) clamp(20px, 5vw, 40px) 0;
+    text-align: center;
+  }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--text-muted);
+    border: 1px solid var(--panel-line);
+    padding: 6px 14px; border-radius: 999px;
+    margin-bottom: 26px;
+  }
+  .eyebrow .blip { width: 6px; height: 6px; border-radius: 50%; background: var(--band-moderate); }
+
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: clamp(34px, 6vw, 56px);
+    line-height: 1.06;
+    letter-spacing: -0.02em;
+    margin: 0 0 20px;
+  }
+
+  main > p.lede {
+    color: var(--text-muted);
+    font-size: 17px;
+    line-height: 1.6;
+    max-width: 50ch;
+    margin: 0 auto 36px;
+  }
+
+  .btn-primary {
+    appearance: none; border: none; cursor: pointer;
+    background: var(--teal); color: #08201D;
+    font-family: 'Inter', sans-serif; font-weight: 600; font-size: 16px;
+    padding: 16px 30px; border-radius: var(--radius-sm);
+    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 10px;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .btn-primary:hover, .btn-primary:focus-visible { background: #63E0D4; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  .survey-note {
+    display: block;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  /* AQI panel — full width band under hero */
+  .aqi-section {
+    position: relative; z-index: 2;
+    max-width: 900px;
+    margin: clamp(56px, 8vw, 90px) auto 0;
+    padding: 0 clamp(20px, 5vw, 40px);
+  }
+
+  .aqi-panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+    border-radius: var(--radius-lg);
+    padding: clamp(28px, 4vw, 44px);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: clamp(24px, 4vw, 48px);
+    align-items: center;
+    text-align: left;
+  }
+  @media (max-width: 620px) {
+    .aqi-panel { grid-template-columns: 1fr; text-align: center; }
+  }
+
+  .aqi-readout-block { text-align: center; }
+  .aqi-number {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: clamp(60px, 8vw, 84px);
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    color: var(--aqi-color, var(--band-moderate));
+  }
+  .aqi-unit { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+  .aqi-detail-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 620px) { .aqi-detail-top { justify-content: center; } }
+
+  .aqi-location { font-size: 13px; color: var(--text-muted); }
+  .aqi-location strong { color: var(--text-primary); font-weight: 600; }
+
+  .live-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-muted);
+    border: 1px solid var(--panel-line); padding: 5px 10px; border-radius: 999px;
+  }
+  .live-pill .blip { width: 6px; height: 6px; border-radius: 50%; background: var(--band-moderate); }
+
+  .aqi-band-label {
+    display: inline-block; font-size: 14px; font-weight: 600;
+    padding: 5px 12px; border-radius: 999px;
+    background: color-mix(in srgb, var(--aqi-color, var(--band-moderate)) 18%, transparent);
+    color: var(--aqi-color, var(--band-moderate));
+    margin-bottom: 14px;
+  }
+
+  .aqi-scale { display: flex; height: 6px; border-radius: 4px; overflow: hidden; margin: 14px 0 6px; }
+  .aqi-scale span { flex: 1; }
+  .aqi-scale-labels { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-muted); }
+
+  .aqi-tip { font-size: 13.5px; color: var(--text-muted); line-height: 1.55; margin-top: 14px; }
+
+  /* About strip — three simple stats, no button */
+  .about-section {
+    position: relative; z-index: 2;
+    max-width: 900px;
+    margin: clamp(64px, 9vw, 110px) auto 0;
+    padding: clamp(40px, 6vw, 56px) clamp(20px, 5vw, 40px);
+    border-top: 1px solid var(--panel-line);
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+    max-width: 620px;
+  }
+  @media (max-width: 680px) {
+    .about-section { grid-template-columns: 1fr; text-align: center; }
+  }
+
+  .about-item .num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600; font-size: 24px; color: var(--teal);
+    margin-bottom: 6px;
+  }
+  .about-item .label {
+    font-size: 14px; color: var(--text-muted); line-height: 1.5;
+  }
+
+  footer {
+    position: relative; z-index: 2;
+    max-width: 900px;
+    margin: clamp(40px, 6vw, 64px) auto 0;
+    padding: 26px clamp(20px, 5vw, 40px) calc(30px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--panel-line);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    font-size: 13px; color: var(--text-muted);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .btn-primary { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="haze"></div>
+
+<header>
+  <div class="brand"><span class="dot"></span>AirPulse</div>
+  <nav>
+    <a href="#aqi">AQI</a>
+    <a href="results.html">Results</a>
+  </nav>
+</header>
+
+<main>
+  <div class="eyebrow"><span class="blip"></span>Pune, Maharashtra</div>
+  <h1>Know the air before you step outside.</h1>
+  <p class="lede">AirPulse tracks Pune's air quality in real time and gathers how the people breathing it actually experience it — so the numbers and the lived reality sit side by side.</p>
+
+  <a class="btn-primary" id="surveyBtn" href="#" target="_blank" rel="noopener">
+    Take the Survey
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </a>
+  <span class="survey-note">2 minutes · anonymous · helps your neighborhood</span>
+</main>
+
+<section class="aqi-section" id="aqi">
+  <div class="aqi-panel">
+    <div class="aqi-readout-block">
+      <div class="aqi-number" id="aqiNumber">158</div>
+      <div class="aqi-unit">US AQI</div>
+    </div>
+    <div>
+      <div class="aqi-detail-top">
+        <div class="aqi-location">Reading near <strong>Pune, Maharashtra</strong></div>
+        <div class="live-pill"><span class="blip"></span>Sample reading</div>
+      </div>
+      <div class="aqi-band-label" id="aqiBandLabel">Unhealthy</div>
+      <div class="aqi-scale">
+        <span style="background:var(--band-good)"></span>
+        <span style="background:var(--band-moderate)"></span>
+        <span style="background:var(--band-usg)"></span>
+        <span style="background:var(--band-unhealthy)"></span>
+        <span style="background:var(--band-vunhealthy)"></span>
+        <span style="background:var(--band-hazard)"></span>
+      </div>
+      <div class="aqi-scale-labels"><span>0</span><span>500</span></div>
+      <p class="aqi-tip" id="aqiTip">Placeholder reading for design purposes. Connect a live feed once this page is self-hosted.</p>
+      <a href="results.html" style="display:inline-block; margin-top:14px; font-size:13px; color:var(--teal); text-decoration:none; font-weight:600;">See full survey results →</a>
+    </div>
+  </div>
+</section>
+
+<section class="about-section">
+  <div class="about-item">
+    <div class="num">~2 min</div>
+    <div class="label">Average time to complete the survey</div>
+  </div>
+  <div class="about-item">
+    <div class="num">Anonymous</div>
+    <div class="label">No email or name required to respond</div>
+  </div>
+</section>
+
+<footer>
+  <span>AirPulse — a community air-quality project</span>
+  <span>Data shown is illustrative until a live feed is connected</span>
+</footer>
+
+<script>
+  const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/1ZGXldcIQDR3OEaV3uUAYgscK2P4lvSC87jR1LEu3vRs/viewform";
+  document.getElementById('surveyBtn').href = GOOGLE_FORM_URL;
+
+  const SAMPLE_AQI = 158;
+
+  function bandFor(aqi) {
+    if (aqi <= 50) return { label: "Good", color: "var(--band-good)", tip: "Air quality is satisfactory. Enjoy normal outdoor activity." };
+    if (aqi <= 100) return { label: "Moderate", color: "var(--band-moderate)", tip: "Acceptable air quality. Unusually sensitive people should watch for symptoms." };
+    if (aqi <= 150) return { label: "Unhealthy for Sensitive Groups", color: "var(--band-usg)", tip: "Sensitive groups should limit prolonged outdoor exertion." };
+    if (aqi <= 200) return { label: "Unhealthy", color: "var(--band-unhealthy)", tip: "Everyone may begin to notice health effects. Limit prolonged outdoor exertion." };
+    if (aqi <= 300) return { label: "Very Unhealthy", color: "var(--band-vunhealthy)", tip: "Health alert: everyone may experience more serious effects. Avoid outdoor exertion." };
+    return { label: "Hazardous", color: "var(--band-hazard)", tip: "Health warning of emergency conditions. Stay indoors where possible." };
+  }
+
+  const band = bandFor(SAMPLE_AQI);
+  document.getElementById('aqiNumber').textContent = SAMPLE_AQI;
+  document.getElementById('aqiNumber').style.setProperty('--aqi-color', band.color);
+  document.getElementById('aqiBandLabel').textContent = band.label;
+  document.getElementById('aqiBandLabel').style.setProperty('--aqi-color', band.color);
+  document.getElementById('aqiTip').textContent = band.tip + " (Sample data — connect a live feed once self-hosted.)";
+</script>
+
+</body>
+</html>
