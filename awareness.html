@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AirPulse — Awareness Survey Results</title>
+<style>
+:root{--bg:#f6f8f7;--card:#fff;--ink:#14302b;--mute:#5d7570;--line:#dbe5e2;--accent:#0f766e}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1a18;--card:#152522;--ink:#e6f1ee;--mute:#93aca6;--line:#25403b;--accent:#4fd1c1}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Georgia,"Times New Roman",serif}
+h1,h2,h3,.num,nav,.note{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+nav{display:flex;gap:20px;padding:14px 24px;border-bottom:1px solid var(--line);font-size:14px;flex-wrap:wrap}
+nav a{color:var(--mute);text-decoration:none}nav a.on,nav a:hover{color:var(--accent)}
+nav b{margin-right:auto;color:var(--ink)}
+main{max-width:1080px;margin:0 auto;padding:40px 20px 64px}
+h1{font-size:clamp(30px,5vw,48px);line-height:1.1;margin:0 0 12px;letter-spacing:-.02em}
+.lead{max-width:62ch;color:var(--mute);margin:0 0 28px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:12px}
+.stat{border-left:3px solid var(--accent);padding:4px 0 4px 14px}
+.num{font-size:34px;font-weight:700;line-height:1}
+.stat span{display:block;color:var(--mute);font-size:14px;margin-top:6px}
+h2{font-size:24px;margin:48px 0 16px;padding-top:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px}
+.card h3{font-size:16px;margin:0 0 2px}
+.sub{color:var(--mute);font-size:13px;margin:0 0 12px;font-family:system-ui,sans-serif}
+.box{position:relative;height:280px}
+.tall{height:340px}
+.note{color:var(--mute);font-size:13px;margin-top:40px;max-width:80ch}
+</style>
+</head>
+<body>
+<nav><b>AirPulse</b><a href="index.html">Home</a><a href="results.html">Exposure survey</a><a class="on" href="awareness.html">Awareness survey</a><a href="pollutants.html">Pollutants</a></nav>
+<main>
+<h1>What people know about the air they breathe.</h1>
+<p class="lead">Results from the "Survey on Air Pollution Assessment": 87 community responses on AQI awareness, how serious people think pollution is, what they blame, and what they would change.</p>
+
+<div class="stats">
+<div class="stat"><div class="num">87</div><span>Total responses</span></div>
+<div class="stat"><div class="num">70%</div><span>Of respondents live in Pune &amp; PCMC</span></div>
+<div class="stat"><div class="num" id="s1"></div><span>Rate pollution 4 or 5 out of 5</span></div>
+<div class="stat"><div class="num" id="s2"></div><span>Name vehicles as a major cause</span></div>
+</div>
+
+<h2>Who responded</h2>
+<div class="grid">
+<div class="card"><h3>Age group</h3><p class="sub">87 responses</p><div class="box"><canvas id="age"></canvas></div></div>
+<div class="card"><h3>Gender</h3><p class="sub">87 responses</p><div class="box"><canvas id="gender"></canvas></div></div>
+<div class="card"><h3>Area of residence</h3><p class="sub">Grouped from free-text answers</p><div class="box"><canvas id="area"></canvas></div></div>
+</div>
+
+<h2>AQI awareness</h2>
+<div class="grid">
+<div class="card"><h3>Do you know your area's AQI?</h3><p class="sub">Based on the number or answer given</p><div class="box"><canvas id="aware"></canvas></div></div>
+<div class="card"><h3>AQI values people reported</h3><p class="sub">48 numeric answers; ranges use their midpoint, CPCB bands</p><div class="box"><canvas id="aqi"></canvas></div></div>
+<div class="card"><h3>Where people get AQI information</h3><p class="sub">Multiple choice, 80 respondents</p><div class="box tall"><canvas id="src"></canvas></div></div>
+<div class="card"><h3>How serious is pollution locally?</h3><p class="sub">1 = not of concern, 5 = extremely serious (average 3.45)</p><div class="box tall"><canvas id="sev"></canvas></div></div>
+</div>
+
+<h2>Causes people point to</h2>
+<div class="grid">
+<div class="card"><h3>Major causes of air pollution</h3><p class="sub">Multiple choice, share of 87 respondents</p><div class="box tall"><canvas id="causes"></canvas></div></div>
+<div class="card"><h3>The single biggest cause locally</h3><p class="sub">Free text, grouped by theme; share of mentions</p><div class="box tall"><canvas id="q8"></canvas></div></div>
+</div>
+
+<h2>What people would change</h2>
+<div class="grid"><div class="card" style="grid-column:1/-1"><h3>Suggested measures</h3><p class="sub">Free text from 77 respondents, grouped by theme; an answer can name several</p><div class="box tall"><canvas id="q9"></canvas></div></div></div>
+
+<p class="note">Free-text answers were grouped by keyword, so counts are approximate. Blank, joke and unrelated entries were left out of the charts. Locality answers were grouped into broad areas; unreadable entries appear as "Unclear / outside".</p>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const D={
+age:{"18–30":51,"31–45":12,"46–60":17,"Above 60":6,"Below 18":1},
+gender:{"Male":49,"Female":33,"Other / not stated":5},
+area:{"Pune & PCMC":61,"Malegaon / Nashik":11,"Mumbai region":3,"Other Maharashtra":3,"Unclear / outside":9},
+aware:{"Gave an AQI value":48,"Says aware, no value":11,"Not aware / unsure":24,"No usable answer":4},
+aqi:{"0–50 Good":28,"51–100 Satisfactory":14,"101–200 Moderate":6,"200+ Poor":0},
+src:{"Weather/AQI app":35,"News / social media":23,"Not applicable":16,"Govt / CPCB site or app":12,"Local display":12,"Other":4},
+sev:{"1":7,"2":13,"3":22,"4":24,"5":21},
+causes:{"Vehicle emissions":68,"Construction dust":54,"Industrial emissions":42,"Garbage burning":38,"Firecrackers":34,"Smoking / drugs":24,"Diesel generators":20},
+q8:{"Vehicles & traffic":46,"Construction & development":16,"Road & street dust":16,"Garbage & waste burning":13,"Industry & factories":8,"Loss of green cover":5,"Firecrackers":3,"Smoking":2},
+q9:{"Public transport, EVs, fewer vehicles":26,"Control construction & road dust":19,"Waste management, no burning":16,"Plant trees, add green cover":14,"Stricter rules & enforcement":13,"Vehicle emission checks (PUC)":12,"Traffic management":7,"Industrial controls":3,"Curb firecrackers":3,"Awareness & education":2}
+};
+document.getElementById('s1').textContent=Math.round(45/87*100)+'%';
+document.getElementById('s2').textContent=Math.round(68/87*100)+'%';
+const css=getComputedStyle(document.documentElement);
+const ink=css.getPropertyValue('--ink').trim(),mute=css.getPropertyValue('--mute').trim(),line=css.getPropertyValue('--line').trim();
+const P=['#0f766e','#e09f3e','#9e2a2b','#3a6ea5','#7a9e7e','#b5838d','#6d597a','#8d99ae','#c9ada7'];
+Chart.defaults.color=mute;Chart.defaults.font.family='system-ui,-apple-system,"Segoe UI",sans-serif';
+const mk=(id,type,d,o={})=>{
+ const k=Object.keys(d),v=Object.values(d),tot=v.reduce((a,b)=>a+b,0),pie=type==='doughnut'||type==='pie';
+ new Chart(document.getElementById(id),{type,data:{labels:k,datasets:[{data:v,backgroundColor:o.colors||P,borderWidth:pie?2:0,borderColor:css.getPropertyValue('--card').trim(),borderRadius:pie?0:4}]},
+ options:{responsive:true,maintainAspectRatio:false,indexAxis:o.h?'y':'x',
+  plugins:{legend:{display:pie,position:'bottom',labels:{color:ink,boxWidth:12,padding:12}},
+   tooltip:{callbacks:{label:c=>` ${c.parsed.y??c.parsed.x??c.parsed} (${Math.round(c.raw/(o.base||tot)*100)}%)`}}},
+  scales:pie?{}:{x:{grid:{color:o.h?line:'transparent'},ticks:{color:ink}},y:{grid:{color:o.h?'transparent':line},ticks:{color:ink},beginAtZero:true}}}});
+};
+mk('age','doughnut',D.age);mk('gender','pie',D.gender);mk('area','doughnut',D.area);
+mk('aware','pie',D.aware,{colors:['#0f766e','#e09f3e','#9e2a2b','#8d99ae']});
+mk('aqi','bar',D.aqi,{colors:['#2f9e6e','#e0c23e','#e09f3e','#9e2a2b'],base:48});
+mk('src','bar',D.src,{h:1,colors:['#0f766e'],base:80});
+mk('sev','bar',D.sev,{colors:['#7a9e7e','#a9c27a','#e0c23e','#e09f3e','#9e2a2b']});
+mk('causes','bar',D.causes,{h:1,colors:['#0f766e'],base:87});
+mk('q8','doughnut',D.q8);
+mk('q9','bar',D.q9,{h:1,colors:['#0f766e'],base:77});
+</script>
+</body>
+</html>
